@@ -5,6 +5,7 @@ import httpx
 
 
 class HttpFile(io.RawIOBase):
+    USER_AGENT = "Dalvik/2.1.0 (Linux; U; Android 14; KB2001 Build/UKQ1.230924.001)" 
 
     def seekable(self) -> bool:
         return True
@@ -21,7 +22,7 @@ class HttpFile(io.RawIOBase):
         if self.pos >= self.size:
             raise ValueError("reached EOF!")
         headers = {"Range": f"bytes={self.pos}-{end_pos}"}
-        with self.client.stream("GET", self.url, headers=headers) as r:
+        with self.client.stream("GET", self.url, headers=headers, "User-Agent": self.USER_AGENT) as r:
             if r.status_code != 206:
                 raise io.UnsupportedOperation("Remote did not return partial content!")
             if self.progress_reporter is not None:
@@ -71,7 +72,8 @@ class HttpFile(io.RawIOBase):
         client = httpx.Client()
         self.url = url
         self.client = client
-        h = client.head(url)
+        self.headers = {"User-Agent": self.USER_AGENT}
+        h = client.head(url, headers=self.headers)
         if h.headers.get("Accept-Ranges", "none") != "bytes":
             raise ValueError("remote does not support ranges!")
         size = int(h.headers.get("Content-Length", 0))
