@@ -21,8 +21,8 @@ class HttpFile(io.RawIOBase):
         end_pos = self.pos + size - 1
         if self.pos >= self.size:
             raise ValueError("reached EOF!")
-        headers = {"Range": f"bytes={self.pos}-{end_pos}"}
-        with self.client.stream("GET", self.url, headers=headers, "User-Agent": self.USER_AGENT) as r:
+        headers = {"Range": f"bytes={self.pos}-{end_pos}", "User-Agent": self.USER_AGENT}
+        with self.client.stream("GET", self.url, headers=headers) as r:
             if r.status_code != 206:
                 raise io.UnsupportedOperation("Remote did not return partial content!")
             if self.progress_reporter is not None:
